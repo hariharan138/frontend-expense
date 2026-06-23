@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import { format } from "date-fns";
 import axiosInstance from "../api/axios";
 import { Button } from "../components/ui/button";
@@ -39,6 +40,7 @@ const EMPTY_FORM = {
   remark: "",
   category: "Other",
   date: format(new Date(), "yyyy-MM-dd"),
+  shared: false,
 };
 
 export default function TransactionsPage() {
@@ -52,6 +54,8 @@ export default function TransactionsPage() {
     startDate: "",
     endDate: "",
   });
+
+  const { user } = useAuth();
 
   const fetchData = async () => {
     const params = new URLSearchParams(
@@ -80,6 +84,7 @@ export default function TransactionsPage() {
       remark: tx.remark,
       category: tx.category,
       date: format(new Date(tx.date), "yyyy-MM-dd"),
+      shared: !!tx.shared,
     });
     setOpen(true);
   };
@@ -164,7 +169,7 @@ export default function TransactionsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-card text-left">
-                  {["Date", "Type", "Category", "Remark", "Amount", "Actions"].map((h) => (
+                  {["Date", "Type", "Category", "User", "Remark", "Amount", "Actions"].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground"
@@ -192,6 +197,7 @@ export default function TransactionsPage() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{tx.category}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{tx.user?.name || tx.user}</td>
                     <td className="px-4 py-3 font-medium">{tx.remark}</td>
                     <td
                       className={`px-4 py-3 font-semibold ${
@@ -203,22 +209,26 @@ export default function TransactionsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => openEdit(tx)}
-                          className="h-7 w-7"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleDelete(tx._id)}
-                          className="h-7 w-7 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        {user && (user.role === "admin" || String(tx.user._id || tx.user) === String(user._id || user.id)) && (
+                          <>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => openEdit(tx)}
+                              className="h-7 w-7"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleDelete(tx._id)}
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -293,6 +303,19 @@ export default function TransactionsPage() {
                 onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
               />
             </div>
+            {user?.role === "admin" && (
+              <div className="space-y-1.5">
+                <Label>Shared (visible to all users)</Label>
+                <div>
+                  <input
+                    type="checkbox"
+                    checked={!!form.shared}
+                    onChange={(e) => setForm((p) => ({ ...p, shared: e.target.checked }))}
+                  />{' '}
+                  <span className="text-sm text-muted-foreground">Make this transaction visible to all users</span>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
