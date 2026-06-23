@@ -7,13 +7,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
+// category now uses plain text input instead of Select dropdown
 import {
   Dialog,
   DialogContent,
@@ -139,22 +133,11 @@ export default function TransactionsPage() {
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Category</Label>
-              <Select
+              <Input
+                placeholder="All"
                 value={filters.category}
-                onValueChange={(v) => setFilters((p) => ({ ...p, category: v === "ALL" ? "" : v }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All</SelectItem>
-                  {CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(e) => setFilters((p) => ({ ...p, category: e.target.value }))}
+              />
             </div>
           </div>
         </CardContent>
@@ -209,7 +192,7 @@ export default function TransactionsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
-                        {user && (user.role === "admin" || String(tx.user._id || tx.user) === String(user._id || user.id)) && (
+                        {user && (
                           <>
                             <Button
                               size="icon"
@@ -282,18 +265,11 @@ export default function TransactionsPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Category</Label>
-              <Select value={form.category} onValueChange={(v) => setForm((p) => ({ ...p, category: v }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                placeholder="Category"
+                value={form.category}
+                onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Date</Label>
