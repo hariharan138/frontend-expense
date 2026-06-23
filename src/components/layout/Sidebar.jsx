@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -5,12 +6,15 @@ import {
   FileBarChart,
   LogOut,
   Wallet,
+  Menu,
+  X,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 import ThemeToggle from "../theme/ThemeToggle";
 
 const navItems = [
@@ -28,11 +32,11 @@ function getInitials(name) {
     .slice(0, 2);
 }
 
-export default function Sidebar() {
+function SidebarContent() {
   const { user, logout } = useAuth();
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+    <div className="flex h-full flex-col">
       {/* Brand */}
       <div className="flex items-center gap-3 px-4 py-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
@@ -94,6 +98,47 @@ export default function Sidebar() {
           Logout
         </Button>
       </div>
+    </div>
+  );
+}
+
+export function DesktopSidebar() {
+  return (
+    <aside className="hidden flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex md:w-64 lg:w-64">
+      <SidebarContent />
     </aside>
+  );
+}
+
+export function MobileSidebarMenu() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          aria-label="Toggle menu"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-64 p-0">
+        <div onClick={() => setOpen(false)}>
+          <SidebarContent />
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+export default function Sidebar() {
+  return (
+    <>
+      <DesktopSidebar />
+      <MobileSidebarMenu />
+    </>
   );
 }
