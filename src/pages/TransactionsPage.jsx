@@ -7,7 +7,6 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
-// category now uses plain text input instead of Select dropdown
 import {
   Dialog,
   DialogContent,
@@ -102,22 +101,6 @@ export default function TransactionsPage() {
 
     // debug: log payload before sending
     console.log("Creating/updating transaction payload:", payload);
-
-    // validate category against allowed list (backend enforces enum)
-    if (!CATEGORIES.includes(payload.category)) {
-      console.warn(
-        "Invalid category sent, mapping to 'Other':",
-        payload.category,
-        "Allowed:",
-        CATEGORIES
-      );
-      // map invalid category to Other to avoid backend validation error
-      payload.category = "Other";
-      alert(
-        "Category was not one of allowed values — using 'Other'. Allowed: " +
-          CATEGORIES.join(", ")
-      );
-    }
 
     try {
       if (editing) await axiosInstance.put(`/transactions/${editing}`, payload);
@@ -307,11 +290,15 @@ export default function TransactionsPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Category</Label>
-              <Input
-                placeholder="Category"
+              <select
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 value={form.category}
                 onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-              />
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-1.5">
               <Label>Date</Label>
