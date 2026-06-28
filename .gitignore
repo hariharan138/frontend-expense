@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+//checking for node_modules and dist folders to avoid committing them to the repository
 node_modules
 dist
 dist-ssr
