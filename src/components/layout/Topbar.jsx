@@ -14,7 +14,7 @@ export default function Topbar() {
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-sm">
-      <div className="flex h-12 items-center justify-between gap-4 px-4 sm:px-6 md:h-14 md:px-8">
+      <div className="flex h-12 items-center justify-between gap-4 px-4 sm:px-6 md:h-14 md:px-6 lg:px-8">
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-base font-semibold text-foreground sm:text-lg">{page.title}</h2>
           <p className="hidden truncate text-xs text-muted-foreground sm:block">{page.subtitle}</p>

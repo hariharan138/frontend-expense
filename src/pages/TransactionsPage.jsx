@@ -55,7 +55,7 @@ export default function TransactionsPage() {
       Object.fromEntries(Object.entries(filters).filter(([, v]) => v))
     ).toString();
     const { data } = await axiosInstance.get(`/transactions?${params}`);
-    const sorted = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sorted = [...data].sort((a, b) => new Date(b.date) - new Date(a.date) || new Date(b.createdAt) - new Date(a.createdAt));
     setTransactions(sorted);
   };
 
