@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, CheckCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, CheckCircle, Search } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { format } from "date-fns";
 import axiosInstance from "../api/axios";
@@ -27,6 +27,8 @@ const STATUS_LABELS = {
   partially_paid: "Partially Paid",
 };
 
+const PAYMENT_METHODS = ["Cash", "UPI"];
+
 const EMPTY_FORM = {
   type: "expense",
   amount: "",
@@ -36,6 +38,7 @@ const EMPTY_FORM = {
   isPendingOrder: false,
   totalOrderAmount: "",
   advanceAmount: "",
+  paymentMethod: "Cash",
 };
 
 export default function TransactionsPage() {
@@ -43,6 +46,7 @@ export default function TransactionsPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editing, setEditing] = useState(null);
+  const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({
     type: "",
     status: "",
@@ -85,6 +89,7 @@ export default function TransactionsPage() {
       isPendingOrder: !!tx.isPendingOrder,
       totalOrderAmount: tx.totalOrderAmount || "",
       advanceAmount: tx.advanceAmount || "",
+      paymentMethod: tx.paymentMethod || "Cash",
     });
     setOpen(true);
   };
@@ -120,6 +125,7 @@ export default function TransactionsPage() {
         isPendingOrder: true,
         totalOrderAmount: total,
         advanceAmount: advance,
+        paymentMethod: form.paymentMethod,
       };
     } else {
       if (!form.amount || Number(form.amount) <= 0) {
@@ -133,6 +139,7 @@ export default function TransactionsPage() {
         date: form.date,
         shared: form.shared,
         isPendingOrder: false,
+        paymentMethod: form.paymentMethod,
       };
     }
 
@@ -165,14 +172,41 @@ export default function TransactionsPage() {
     }
   };
 
+  const filtered = search.trim()
+    ? transactions.filter((tx) => {
+        const q = search.toLowerCase();
+        return (
+          (tx.remark || "").toLowerCase().includes(q) ||
+          (tx.type || "").toLowerCase().includes(q) ||
+          (tx.user?.name || "").toLowerCase().includes(q) ||
+          (tx.user?.email || "").toLowerCase().includes(q) ||
+          (tx.paymentMethod || "Cash").toLowerCase().includes(q) ||
+          (STATUS_LABELS[tx.status] || "Completed").toLowerCase().includes(q) ||
+          String(tx.amount).includes(q) ||
+          String(tx.totalOrderAmount || "").includes(q) ||
+          String(tx.pendingAmount || "").includes(q) ||
+          format(new Date(tx.date), "dd MMM yyyy").toLowerCase().includes(q)
+        );
+      })
+    : transactions;
+
   const pendingCalc = form.isPendingOrder
     ? Math.max(0, Number(form.totalOrderAmount || 0) - Number(form.advanceAmount || 0))
     : 0;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end">
-        <Button onClick={openCreate} className="gap-2">
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search transactions..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button onClick={openCreate} className="gap-2 shrink-0">
           <Plus className="h-4 w-4" /> Add Transaction
         </Button>
       </div>
@@ -232,7 +266,7 @@ export default function TransactionsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-card text-left">
-                  {["Date", "Type", "User", "Remark", "Amount", "Status", "Actions"].map((h) => (
+                  {["Date", "Type", "User", "Remark", "Payment", "Amount", "Status", "Actions"].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground"
@@ -243,7 +277,7 @@ export default function TransactionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {transactions.map((tx) => {
+                {filtered.map((tx) => {
                   const st = tx.status || "completed";
                   const isPending = tx.isPendingOrder && st !== "completed";
                   return (
@@ -264,6 +298,7 @@ export default function TransactionsPage() {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{tx.user?.name || tx.user}</td>
                       <td className="px-4 py-3 font-medium">{tx.remark}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{tx.paymentMethod || "Cash"}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`font-semibold ${
@@ -325,9 +360,9 @@ export default function TransactionsPage() {
                 })}
               </tbody>
             </table>
-            {transactions.length === 0 && (
+            {filtered.length === 0 && (
               <p className="py-10 text-center text-sm text-muted-foreground">
-                No transactions found.
+                {search.trim() ? "No transactions match your search." : "No transactions found."}
               </p>
             )}
           </div>
@@ -431,6 +466,18 @@ export default function TransactionsPage() {
               </>
             )}
 
+            <div className="space-y-1.5">
+              <Label>Payment Method</Label>
+              <select
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                value={form.paymentMethod}
+                onChange={(e) => setForm((p) => ({ ...p, paymentMethod: e.target.value }))}
+              >
+                {PAYMENT_METHODS.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
             <div className="space-y-1.5">
               <Label>Remark</Label>
               <Input

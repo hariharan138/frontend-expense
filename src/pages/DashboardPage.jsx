@@ -3,6 +3,12 @@ import { format } from "date-fns";
 import { TrendingUp, TrendingDown, Wallet, Clock, AlertCircle, Banknote } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 import axiosInstance from "../api/axios";
 
 const STATUS_STYLES = {
@@ -16,8 +22,11 @@ const STATUS_LABELS = {
   partially_paid: "Partially Paid",
 };
 
-const StatCard = ({ title, value, icon: Icon, color, isCurrency = true }) => (
-  <Card className="border-border bg-card">
+const StatCard = ({ title, value, icon: Icon, color, isCurrency = true, onClick }) => (
+  <Card
+    className={`border-border bg-card${onClick ? " cursor-pointer hover:border-primary/40 transition-colors" : ""}`}
+    onClick={onClick}
+  >
     <CardHeader className="flex flex-row items-center justify-between pb-2">
       <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
       <Icon className={`h-4 w-4 ${color}`} />
@@ -35,6 +44,7 @@ const StatCard = ({ title, value, icon: Icon, color, isCurrency = true }) => (
 export default function DashboardPage() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showNetBalance, setShowNetBalance] = useState(false);
 
   useEffect(() => {
     axiosInstance
@@ -60,6 +70,18 @@ export default function DashboardPage() {
   const totalAdvanceCollected = pendingOrders.reduce((s, t) => s + (t.advanceAmount || 0), 0);
   const totalPendingReceivables = pendingOrders.reduce((s, t) => s + (t.pendingAmount || 0), 0);
 
+  // Daily net balance breakdown
+  const dailyMap = {};
+  transactions.forEach((tx) => {
+    const day = format(new Date(tx.date), "yyyy-MM-dd");
+    if (!dailyMap[day]) dailyMap[day] = { income: 0, expense: 0 };
+    if (tx.type === "income") dailyMap[day].income += tx.amount;
+    else dailyMap[day].expense += tx.amount;
+  });
+  const dailyBreakdown = Object.entries(dailyMap)
+    .map(([date, { income, expense }]) => ({ date, income, expense, net: income - expense }))
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
   const recent = transactions.slice(0, 15);
 
   if (loading) {
@@ -81,6 +103,7 @@ export default function DashboardPage() {
           value={net}
           icon={Wallet}
           color={net >= 0 ? "text-green-500" : "text-red-500"}
+          onClick={() => setShowNetBalance(true)}
         />
       </div>
 
@@ -119,7 +142,7 @@ export default function DashboardPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-card text-left">
-                  {["Date", "Type", "User", "Remark", "Amount", "Status"].map((h) => (
+                  {["Date", "Type", "User", "Remark", "Payment", "Amount", "Status"].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground"
@@ -150,6 +173,7 @@ export default function DashboardPage() {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{tx.user?.name || tx.user}</td>
                       <td className="px-4 py-3 font-medium">{tx.remark}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{tx.paymentMethod || "Cash"}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`font-semibold ${
@@ -183,6 +207,65 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+      {/* Net Balance Dialog */}
+      <Dialog open={showNetBalance} onOpenChange={setShowNetBalance}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Daily Net Balance Breakdown</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-background">
+                <tr className="border-b border-border text-left">
+                  {["Date", "Income", "Expense", "Net Balance"].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {dailyBreakdown.map((day) => (
+                  <tr key={day.date} className="border-b border-border/50 hover:bg-card/50 transition-colors">
+                    <td className="px-4 py-2.5 text-muted-foreground">
+                      {format(new Date(day.date), "dd MMM yyyy")}
+                    </td>
+                    <td className="px-4 py-2.5 font-semibold text-green-600">
+                      +{"\u20B9"}{day.income.toLocaleString("en-IN")}
+                    </td>
+                    <td className="px-4 py-2.5 font-semibold text-red-500">
+                      -{"\u20B9"}{day.expense.toLocaleString("en-IN")}
+                    </td>
+                    <td className={`px-4 py-2.5 font-semibold ${day.net >= 0 ? "text-green-600" : "text-red-500"}`}>
+                      {"\u20B9"}{day.net.toLocaleString("en-IN")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="sticky bottom-0 bg-background">
+                <tr className="border-t-2 border-border">
+                  <td className="px-4 py-3 font-semibold">Total</td>
+                  <td className="px-4 py-3 font-semibold text-green-600">
+                    +{"\u20B9"}{totalIncome.toLocaleString("en-IN")}
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-red-500">
+                    -{"\u20B9"}{totalExpense.toLocaleString("en-IN")}
+                  </td>
+                  <td className={`px-4 py-3 font-semibold ${net >= 0 ? "text-green-600" : "text-red-500"}`}>
+                    {"\u20B9"}{net.toLocaleString("en-IN")}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+            {dailyBreakdown.length === 0 && (
+              <p className="py-10 text-center text-sm text-muted-foreground">No data available.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

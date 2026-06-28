@@ -59,6 +59,7 @@ export default function ReportsPage() {
       Date: format(new Date(t.date), "dd/MM/yyyy"),
       Type: t.type,
       Remark: t.remark,
+      "Payment Method": t.paymentMethod || "Cash",
       Amount: t.amount,
       Status: STATUS_LABELS[t.status] || t.status || "Completed",
       "Total Order Amount": t.isPendingOrder ? t.totalOrderAmount : "",
@@ -84,14 +85,15 @@ export default function ReportsPage() {
   };
 
   const exportCSV = () => {
-    const header = "Date,Type,Remark,Amount,Status,Total Order Amount,Advance Amount,Pending Amount\n";
+    const header = "Date,Type,Remark,Payment Method,Amount,Status,Total Order Amount,Advance Amount,Pending Amount\n";
     const rows = transactions
       .map((t) => {
         const status = STATUS_LABELS[t.status] || t.status || "Completed";
+        const pm = t.paymentMethod || "Cash";
         const totalOrd = t.isPendingOrder ? t.totalOrderAmount : "";
         const adv = t.isPendingOrder ? t.advanceAmount : "";
         const pend = t.isPendingOrder ? t.pendingAmount : "";
-        return `${format(new Date(t.date), "dd/MM/yyyy")},${t.type},"${t.remark}",${t.amount},${status},${totalOrd},${adv},${pend}`;
+        return `${format(new Date(t.date), "dd/MM/yyyy")},${t.type},"${t.remark}",${pm},${t.amount},${status},${totalOrd},${adv},${pend}`;
       })
       .join("\n");
     saveAs(
@@ -187,7 +189,7 @@ export default function ReportsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-card">
-                {["Date", "Type", "Remark", "Amount", "Status"].map((h) => (
+                {["Date", "Type", "Remark", "Payment", "Amount", "Status"].map((h) => (
                   <th
                     key={h}
                     className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground"
@@ -207,6 +209,7 @@ export default function ReportsPage() {
                     </td>
                     <td className="px-4 py-2.5 capitalize">{tx.type}</td>
                     <td className="px-4 py-2.5">{tx.remark}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{tx.paymentMethod || "Cash"}</td>
                     <td className="px-4 py-2.5">
                       <span
                         className={`font-semibold ${
