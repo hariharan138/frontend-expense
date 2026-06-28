@@ -13,7 +13,7 @@ export default function Layout() {
         {/* Mobile Header with Menu */}
         <header className="flex items-center border-b border-border bg-background px-4 py-2 md:hidden">
           <MobileSidebarMenu />
-          <h1 className="ml-2 text-lg font-semibold">ExpenseIQ</h1>
+          <h1 className="ml-2 text-lg font-semibold">Vetri Digitals</h1>
         </header>
 
         {/* Topbar */}

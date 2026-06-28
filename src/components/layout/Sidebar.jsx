@@ -43,7 +43,7 @@ function SidebarContent() {
           <Wallet className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <h1 className="truncate text-base font-semibold tracking-tight">ExpenseIQ</h1>
+          <h1 className="truncate text-base font-semibold tracking-tight">Vetri Digitals</h1>
           <p className="truncate text-xs text-muted-foreground">Finance tracker</p>
         </div>
       </div>
