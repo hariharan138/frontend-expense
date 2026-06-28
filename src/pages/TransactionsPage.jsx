@@ -103,6 +103,22 @@ export default function TransactionsPage() {
     // debug: log payload before sending
     console.log("Creating/updating transaction payload:", payload);
 
+    // validate category against allowed list (backend enforces enum)
+    if (!CATEGORIES.includes(payload.category)) {
+      console.warn(
+        "Invalid category sent, mapping to 'Other':",
+        payload.category,
+        "Allowed:",
+        CATEGORIES
+      );
+      // map invalid category to Other to avoid backend validation error
+      payload.category = "Other";
+      alert(
+        "Category was not one of allowed values — using 'Other'. Allowed: " +
+          CATEGORIES.join(", ")
+      );
+    }
+
     try {
       if (editing) await axiosInstance.put(`/transactions/${editing}`, payload);
       else await axiosInstance.post("/transactions", payload);
