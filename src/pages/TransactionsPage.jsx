@@ -84,10 +84,36 @@ export default function TransactionsPage() {
   };
 
   const handleSubmit = async () => {
-    if (editing) await axiosInstance.put(`/transactions/${editing}`, form);
-    else await axiosInstance.post("/transactions", form);
-    setOpen(false);
-    fetchData();
+    // client-side validation
+    if (!form.amount || Number(form.amount) <= 0) {
+      alert("Please enter a valid amount greater than 0.");
+      return;
+    }
+    if (!form.remark || String(form.remark).trim() === "") {
+      alert("Please enter a remark.");
+      return;
+    }
+
+    const payload = {
+      ...form,
+      amount: Number(form.amount),
+      category: form.category || "Other",
+    };
+
+    // debug: log payload before sending
+    console.log("Creating/updating transaction payload:", payload);
+
+    try {
+      if (editing) await axiosInstance.put(`/transactions/${editing}`, payload);
+      else await axiosInstance.post("/transactions", payload);
+      setOpen(false);
+      fetchData();
+    } catch (err) {
+      // log full error for debugging (network/response/body)
+      console.error("Transaction request error:", err?.response?.data || err);
+      const msg = err?.response?.data?.message || err.message || "Request failed";
+      alert("Error: " + (typeof msg === "string" ? msg : JSON.stringify(msg)));
+    }
   };
 
   const handleDelete = async (id) => {
