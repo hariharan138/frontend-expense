@@ -1,21 +1,32 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Clock, AlertCircle, Banknote } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import axiosInstance from "../api/axios";
 
-const StatCard = ({ title, value, icon: Icon, color }) => (
+const STATUS_STYLES = {
+  completed: "bg-green-500/10 text-green-600 border-green-500/20",
+  pending: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+  partially_paid: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+};
+const STATUS_LABELS = {
+  completed: "Completed",
+  pending: "Pending",
+  partially_paid: "Partially Paid",
+};
+
+const StatCard = ({ title, value, icon: Icon, color, isCurrency = true }) => (
   <Card className="border-border bg-card">
     <CardHeader className="flex flex-row items-center justify-between pb-2">
-      <CardTitle className="text-sm font-medium text-muted-foreground">
-        {title}
-      </CardTitle>
+      <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
       <Icon className={`h-4 w-4 ${color}`} />
     </CardHeader>
     <CardContent>
       <p className="text-2xl font-semibold text-foreground">
-        ₹{value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+        {isCurrency
+          ? `\u20B9${value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+          : value}
       </p>
     </CardContent>
   </Card>
@@ -41,24 +52,14 @@ export default function DashboardPage() {
     .reduce((s, t) => s + t.amount, 0);
   const net = totalIncome - totalExpense;
 
-  // Category-wise breakdown
-  const categoryTotals = {};
-  transactions.forEach((tx) => {
-    const key = `${tx.type}:${tx.category || "Other"}`;
-    categoryTotals[key] = (categoryTotals[key] || 0) + tx.amount;
-  });
+  // Pending order metrics
+  const pendingOrders = transactions.filter(
+    (t) => t.isPendingOrder && (t.status === "pending" || t.status === "partially_paid")
+  );
+  const pendingCount = pendingOrders.length;
+  const totalAdvanceCollected = pendingOrders.reduce((s, t) => s + (t.advanceAmount || 0), 0);
+  const totalPendingReceivables = pendingOrders.reduce((s, t) => s + (t.pendingAmount || 0), 0);
 
-  const expenseCategories = Object.entries(categoryTotals)
-    .filter(([k]) => k.startsWith("expense:"))
-    .map(([k, v]) => ({ category: k.split(":")[1], total: v }))
-    .sort((a, b) => b.total - a.total);
-
-  const incomeCategories = Object.entries(categoryTotals)
-    .filter(([k]) => k.startsWith("income:"))
-    .map(([k, v]) => ({ category: k.split(":")[1], total: v }))
-    .sort((a, b) => b.total - a.total);
-
-  // Recent 15 transactions
   const recent = transactions.slice(0, 15);
 
   if (loading) {
@@ -71,20 +72,10 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
+      {/* Financial Summary */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard
-          title="Total Income"
-          value={totalIncome}
-          icon={TrendingUp}
-          color="text-green-500"
-        />
-        <StatCard
-          title="Total Expense"
-          value={totalExpense}
-          icon={TrendingDown}
-          color="text-red-500"
-        />
+        <StatCard title="Total Income" value={totalIncome} icon={TrendingUp} color="text-green-500" />
+        <StatCard title="Total Expense" value={totalExpense} icon={TrendingDown} color="text-red-500" />
         <StatCard
           title="Net Balance"
           value={net}
@@ -93,73 +84,27 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Category Breakdown */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ArrowDownRight className="h-4 w-4 text-red-500" />
-              Expense by Category
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {expenseCategories.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No expenses yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {expenseCategories.map(({ category, total }) => (
-                  <div key={category} className="flex items-center justify-between">
-                    <span className="text-sm text-foreground">{category}</span>
-                    <div className="flex items-center gap-3">
-                      <div className="h-2 rounded-full bg-red-500/20 w-24">
-                        <div
-                          className="h-2 rounded-full bg-red-500"
-                          style={{ width: `${(total / totalExpense) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-sm font-medium text-red-500 w-24 text-right">
-                        ₹{total.toLocaleString("en-IN")}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ArrowUpRight className="h-4 w-4 text-green-500" />
-              Income by Category
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {incomeCategories.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No income yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {incomeCategories.map(({ category, total }) => (
-                  <div key={category} className="flex items-center justify-between">
-                    <span className="text-sm text-foreground">{category}</span>
-                    <div className="flex items-center gap-3">
-                      <div className="h-2 rounded-full bg-green-500/20 w-24">
-                        <div
-                          className="h-2 rounded-full bg-green-500"
-                          style={{ width: `${(total / totalIncome) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-sm font-medium text-green-500 w-24 text-right">
-                        ₹{total.toLocaleString("en-IN")}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* Pending Orders Summary */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard
+          title="Pending Orders"
+          value={pendingCount}
+          icon={Clock}
+          color="text-orange-500"
+          isCurrency={false}
+        />
+        <StatCard
+          title="Advance Collected"
+          value={totalAdvanceCollected}
+          icon={Banknote}
+          color="text-blue-500"
+        />
+        <StatCard
+          title="Pending Receivables"
+          value={totalPendingReceivables}
+          icon={AlertCircle}
+          color="text-orange-500"
+        />
       </div>
 
       {/* Recent Transactions */}
@@ -174,7 +119,7 @@ export default function DashboardPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-card text-left">
-                  {["Date", "Type", "Category", "User", "Remark", "Amount"].map((h) => (
+                  {["Date", "Type", "User", "Remark", "Amount", "Status"].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground"
@@ -185,35 +130,49 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {recent.map((tx) => (
-                  <tr
-                    key={tx._id}
-                    className="border-b border-border/50 hover:bg-card/50 transition-colors"
-                  >
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {format(new Date(tx.date), "dd MMM yyyy")}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        variant={tx.type === "income" ? "default" : "destructive"}
-                        className="text-xs"
-                      >
-                        {tx.type}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{tx.category}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{tx.user?.name || tx.user}</td>
-                    <td className="px-4 py-3 font-medium">{tx.remark}</td>
-                    <td
-                      className={`px-4 py-3 font-semibold ${
-                        tx.type === "income" ? "text-green-600" : "text-red-500"
-                      }`}
+                {recent.map((tx) => {
+                  const st = tx.status || "completed";
+                  return (
+                    <tr
+                      key={tx._id}
+                      className="border-b border-border/50 hover:bg-card/50 transition-colors"
                     >
-                      {tx.type === "income" ? "+" : "-"}₹
-                      {tx.amount.toLocaleString("en-IN")}
-                    </td>
-                  </tr>
-                ))}
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {format(new Date(tx.date), "dd MMM yyyy")}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant={tx.type === "income" ? "default" : "destructive"}
+                          className="text-xs"
+                        >
+                          {tx.type}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{tx.user?.name || tx.user}</td>
+                      <td className="px-4 py-3 font-medium">{tx.remark}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`font-semibold ${
+                            tx.type === "income" ? "text-green-600" : "text-red-500"
+                          }`}
+                        >
+                          {tx.type === "income" ? "+" : "-"}{"\u20B9"}
+                          {tx.amount.toLocaleString("en-IN")}
+                        </span>
+                        {tx.isPendingOrder && (
+                          <span className="block text-xs text-muted-foreground">
+                            Total: {"\u20B9"}{tx.totalOrderAmount?.toLocaleString("en-IN")}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className={`text-xs ${STATUS_STYLES[st]}`}>
+                          {STATUS_LABELS[st]}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             {transactions.length === 0 && (
