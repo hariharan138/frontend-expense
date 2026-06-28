@@ -290,15 +290,11 @@ export default function TransactionsPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Category</Label>
-              <select
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              <Input
+                placeholder="e.g. Food, Transport, Utilities"
                 value={form.category}
                 onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Date</Label>
