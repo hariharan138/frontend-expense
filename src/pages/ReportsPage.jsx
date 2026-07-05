@@ -11,9 +11,9 @@ import { Badge } from "../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 
 const STATUS_STYLES = {
-  completed: "bg-green-500/10 text-green-600 border-green-500/20",
-  pending: "bg-orange-500/10 text-orange-600 border-orange-500/20",
-  partially_paid: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  completed: "bg-success/10 text-success border-success/25",
+  pending: "bg-warning/10 text-warning border-warning/25",
+  partially_paid: "bg-info/10 text-info border-info/25",
 };
 const STATUS_LABELS = {
   completed: "Completed",
@@ -162,15 +162,19 @@ export default function ReportsPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         {[
-          { label: "Total Income", value: totalIncome, color: "text-green-600" },
-          { label: "Total Expense", value: totalExpense, color: "text-red-500" },
+          { label: "Total Income", value: totalIncome, color: "text-success" },
+          { label: "Total Expense", value: totalExpense, color: "text-destructive" },
           { label: "Net Balance", value: totalIncome - totalExpense, color: "text-foreground" },
-          { label: "Pending Receivables", value: totalPending, color: "text-orange-500" },
-        ].map(({ label, value, color }) => (
-          <Card key={label} className="border-border">
+          { label: "Pending Receivables", value: totalPending, color: "text-warning" },
+        ].map(({ label, value, color }, i) => (
+          <Card
+            key={label}
+            className="animate-fade-up border-border shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover"
+            style={{ animationDelay: `${i * 60}ms` }}
+          >
             <CardContent className="pt-5">
               <p className="text-xs text-muted-foreground mb-1">{label}</p>
-              <p className={`text-xl font-semibold ${color}`}>
+              <p className={`font-display text-xl font-semibold tracking-tight tabular-nums ${color}`}>
                 {"\u20B9"}{value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </p>
             </CardContent>
@@ -188,7 +192,7 @@ export default function ReportsPage() {
         <CardContent className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border bg-card">
+              <tr className="border-b border-border bg-muted/50">
                 {["Date", "Type", "Remark", "Payment", "Amount", "Status"].map((h) => (
                   <th
                     key={h}
@@ -203,7 +207,7 @@ export default function ReportsPage() {
               {transactions.map((tx) => {
                 const st = tx.status || "completed";
                 return (
-                  <tr key={tx._id} className="border-b border-border/50 hover:bg-card/50">
+                  <tr key={tx._id} className="border-b border-border/50 hover:bg-muted/40 transition-colors">
                     <td className="px-4 py-2.5 text-muted-foreground">
                       {format(new Date(tx.date), "dd MMM yyyy")}
                     </td>
@@ -212,8 +216,8 @@ export default function ReportsPage() {
                     <td className="px-4 py-2.5 text-muted-foreground">{tx.paymentMethod || "Cash"}</td>
                     <td className="px-4 py-2.5">
                       <span
-                        className={`font-semibold ${
-                          tx.type === "income" ? "text-green-600" : "text-red-500"
+                        className={`font-semibold tabular-nums ${
+                          tx.type === "income" ? "text-success" : "text-destructive"
                         }`}
                       >
                         {tx.type === "income" ? "+" : "-"}{"\u20B9"}

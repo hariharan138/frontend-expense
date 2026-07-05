@@ -1,70 +1,87 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 250 249 246;
-    --foreground: 26 26 26;
+    /* Violet SaaS dashboard theme — light gray canvas, floating white
+       rounded cards, near-black sidebar with a solid violet active tile,
+       violet primary with yellow / pink / green accents. */
+    --background: 241 241 246;
+    --foreground: 23 23 31;
     --card: 255 255 255;
-    --card-foreground: 26 26 26;
+    --card-foreground: 23 23 31;
     --popover: 255 255 255;
-    --popover-foreground: 26 26 26;
-    --primary: 217 119 87;
+    --popover-foreground: 23 23 31;
+    --primary: 124 58 237;
     --primary-foreground: 255 255 255;
-    --secondary: 245 244 239;
-    --secondary-foreground: 45 45 45;
-    --muted: 245 244 239;
-    --muted-foreground: 110 107 101;
-    --accent: 232 230 223;
-    --accent-foreground: 26 26 26;
-    --destructive: 220 38 38;
+    --secondary: 245 245 249;
+    --secondary-foreground: 35 35 45;
+    --muted: 245 245 249;
+    --muted-foreground: 121 121 136;
+    --accent: 240 237 252;
+    --accent-foreground: 55 35 105;
+    --destructive: 244 63 94;
     --destructive-foreground: 255 255 255;
-    --border: 232 230 223;
-    --input: 232 230 223;
-    --ring: 217 119 87;
-    --radius: 0.5rem;
+    --success: 22 163 74;
+    --success-foreground: 255 255 255;
+    --warning: 202 138 4;
+    --warning-foreground: 255 255 255;
+    --info: 59 130 246;
+    --info-foreground: 255 255 255;
+    --border: 235 235 242;
+    --input: 228 228 236;
+    --ring: 124 58 237;
+    --radius: 1rem;
 
-    --sidebar-background: 245 244 239;
-    --sidebar-foreground: 26 26 26;
-    --sidebar-primary: 217 119 87;
+    --sidebar-background: 20 20 24;
+    --sidebar-foreground: 246 246 248;
+    --sidebar-primary: 124 58 237;
     --sidebar-primary-foreground: 255 255 255;
-    --sidebar-accent: 232 230 223;
-    --sidebar-accent-foreground: 26 26 26;
-    --sidebar-border: 232 230 223;
-    --sidebar-ring: 217 119 87;
+    --sidebar-accent: 40 40 48;
+    --sidebar-accent-foreground: 246 246 248;
+    --sidebar-border: 42 42 52;
+    --sidebar-ring: 124 58 237;
   }
 
   .dark {
-    --background: 30 30 30;
-    --foreground: 232 230 223;
-    --card: 42 42 42;
-    --card-foreground: 232 230 223;
-    --popover: 42 42 42;
-    --popover-foreground: 232 230 223;
-    --primary: 217 119 87;
+    /* Dark counterpart of the violet dashboard theme — deep charcoal canvas,
+       brighter violet primary, softened semantic accents. */
+    --background: 15 15 19;
+    --foreground: 237 237 242;
+    --card: 24 24 30;
+    --card-foreground: 237 237 242;
+    --popover: 24 24 30;
+    --popover-foreground: 237 237 242;
+    --primary: 139 92 246;
     --primary-foreground: 255 255 255;
-    --secondary: 58 58 58;
-    --secondary-foreground: 232 230 223;
-    --muted: 58 58 58;
-    --muted-foreground: 158 155 147;
-    --accent: 58 58 58;
-    --accent-foreground: 232 230 223;
-    --destructive: 220 38 38;
+    --secondary: 33 33 41;
+    --secondary-foreground: 224 224 232;
+    --muted: 33 33 41;
+    --muted-foreground: 148 148 163;
+    --accent: 45 40 66;
+    --accent-foreground: 237 237 242;
+    --destructive: 244 63 94;
     --destructive-foreground: 255 255 255;
-    --border: 58 58 58;
-    --input: 58 58 58;
-    --ring: 217 119 87;
+    --success: 74 222 128;
+    --success-foreground: 8 40 20;
+    --warning: 250 204 21;
+    --warning-foreground: 66 50 4;
+    --info: 96 165 250;
+    --info-foreground: 10 35 66;
+    --border: 39 39 49;
+    --input: 39 39 49;
+    --ring: 139 92 246;
 
-    --sidebar-background: 26 26 26;
-    --sidebar-foreground: 232 230 223;
-    --sidebar-primary: 217 119 87;
+    --sidebar-background: 10 10 14;
+    --sidebar-foreground: 237 237 242;
+    --sidebar-primary: 139 92 246;
     --sidebar-primary-foreground: 255 255 255;
-    --sidebar-accent: 42 42 42;
-    --sidebar-accent-foreground: 232 230 223;
-    --sidebar-border: 58 58 58;
-    --sidebar-ring: 217 119 87;
+    --sidebar-accent: 33 33 43;
+    --sidebar-accent-foreground: 237 237 242;
+    --sidebar-border: 36 36 46;
+    --sidebar-ring: 139 92 246;
   }
 
   * {
@@ -74,7 +91,28 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings: "rlig" 1, "calt" 1, "cv11" 1;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background: rgb(var(--primary) / 0.25);
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: rgb(var(--primary));
+  }
+
+  button:not(:disabled):active {
+    transform: scale(0.98);
   }
 
   ::-webkit-scrollbar {
@@ -87,5 +125,21 @@
   ::-webkit-scrollbar-thumb {
     background: rgb(var(--border));
     border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--muted-foreground) / 0.4);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    button:not(:disabled):active {
+      transform: none;
+    }
   }
 }

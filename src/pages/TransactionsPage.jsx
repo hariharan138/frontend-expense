@@ -15,27 +15,43 @@ import {
   DialogFooter,
 } from "../components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { cn } from "../lib/utils";
 
 const STATUS_STYLES = {
-  completed: "bg-green-500/10 text-green-600 border-green-500/20",
-  pending: "bg-orange-500/10 text-orange-600 border-orange-500/20",
-  partially_paid: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  completed: "bg-block-mint/60 text-vivid-mint border-vivid-mint/30 dark:bg-vivid-mint/15",
+  pending: "bg-block-cream/70 text-vivid-cream border-vivid-cream/30 dark:bg-vivid-cream/15",
+  partially_paid: "bg-block-lilac/50 text-vivid-lilac border-vivid-lilac/30 dark:bg-vivid-lilac/15",
+  unconfirmed: "bg-block-pink/60 text-vivid-pink border-vivid-pink/30 dark:bg-vivid-pink/15",
+};
+
+const TYPE_FILTER_STYLES = {
+  income: "border-vivid-mint bg-vivid-mint text-white hover:bg-vivid-mint/90",
+  expense: "border-vivid-coral bg-vivid-coral text-white hover:bg-vivid-coral/90",
+};
+
+const STATUS_FILTER_STYLES = {
+  completed: "border-vivid-mint bg-vivid-mint text-white hover:bg-vivid-mint/90",
+  pending: "border-vivid-cream bg-vivid-cream text-white hover:bg-vivid-cream/90",
+  partially_paid: "border-vivid-lilac bg-vivid-lilac text-white hover:bg-vivid-lilac/90",
+  unconfirmed: "border-vivid-pink bg-vivid-pink text-white hover:bg-vivid-pink/90",
 };
 const STATUS_LABELS = {
   completed: "Completed",
   pending: "Pending",
   partially_paid: "Partially Paid",
+  unconfirmed: "Unconfirmed",
 };
 
 const PAYMENT_METHODS = ["Cash", "UPI"];
 
 const EMPTY_FORM = {
-  type: "expense",
+  type: "income",
   amount: "",
   remark: "",
   date: format(new Date(), "yyyy-MM-dd"),
   shared: false,
   isPendingOrder: false,
+  isUnconfirmed: false,
   totalOrderAmount: "",
   advanceAmount: "",
   paymentMethod: "Cash",
@@ -87,6 +103,7 @@ export default function TransactionsPage() {
       date: format(new Date(tx.date), "yyyy-MM-dd"),
       shared: !!tx.shared,
       isPendingOrder: !!tx.isPendingOrder,
+      isUnconfirmed: tx.status === "unconfirmed",
       totalOrderAmount: tx.totalOrderAmount || "",
       advanceAmount: tx.advanceAmount || "",
       paymentMethod: tx.paymentMethod || "Cash",
@@ -102,7 +119,17 @@ export default function TransactionsPage() {
 
     let payload;
 
-    if (form.isPendingOrder) {
+    if (form.isUnconfirmed) {
+      payload = {
+        type: form.type,
+        remark: form.remark,
+        date: form.date,
+        shared: form.shared,
+        isPendingOrder: false,
+        isUnconfirmed: true,
+        paymentMethod: form.paymentMethod,
+      };
+    } else if (form.isPendingOrder) {
       const total = Number(form.totalOrderAmount);
       const advance = Number(form.advanceAmount);
       if (!total || total <= 0) {
@@ -219,7 +246,8 @@ export default function TransactionsPage() {
               <Button
                 key={t}
                 size="sm"
-                variant={filters.type === t ? "default" : "outline"}
+                variant="outline"
+                className={cn(filters.type === t && TYPE_FILTER_STYLES[t])}
                 onClick={() =>
                   setFilters((p) => ({ ...p, type: p.type === t ? "" : t }))
                 }
@@ -240,11 +268,12 @@ export default function TransactionsPage() {
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <Label className="flex items-center mr-2">Status:</Label>
-            {["completed", "pending", "partially_paid"].map((s) => (
+            {["completed", "pending", "partially_paid", "unconfirmed"].map((s) => (
               <Button
                 key={s}
                 size="sm"
-                variant={filters.status === s ? "default" : "outline"}
+                variant="outline"
+                className={cn(filters.status === s && STATUS_FILTER_STYLES[s])}
                 onClick={() =>
                   setFilters((p) => ({ ...p, status: p.status === s ? "" : s }))
                 }
@@ -265,7 +294,7 @@ export default function TransactionsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-card text-left">
+                <tr className="border-b border-border bg-muted/50 text-left">
                   {["Date", "Type", "User", "Remark", "Payment", "Amount", "Status", "Actions"].map((h) => (
                     <th
                       key={h}
@@ -283,15 +312,19 @@ export default function TransactionsPage() {
                   return (
                     <tr
                       key={tx._id}
-                      className="border-b border-border/50 hover:bg-card/50 transition-colors"
+                      className="border-b border-border/50 hover:bg-muted/40 transition-colors"
                     >
                       <td className="px-4 py-3 text-muted-foreground">
                         {format(new Date(tx.date), "dd MMM yyyy")}
                       </td>
                       <td className="px-4 py-3">
                         <Badge
-                          variant={tx.type === "income" ? "default" : "destructive"}
-                          className="text-xs"
+                          variant="outline"
+                          className={`text-xs capitalize ${
+                            tx.type === "income"
+                              ? "bg-block-mint/60 text-vivid-mint border-vivid-mint/30 dark:bg-vivid-mint/15"
+                              : "bg-block-coral/60 text-vivid-coral border-vivid-coral/30 dark:bg-vivid-coral/15"
+                          }`}
                         >
                           {tx.type}
                         </Badge>
@@ -300,19 +333,25 @@ export default function TransactionsPage() {
                       <td className="px-4 py-3 font-medium">{tx.remark}</td>
                       <td className="px-4 py-3 text-muted-foreground">{tx.paymentMethod || "Cash"}</td>
                       <td className="px-4 py-3">
-                        <span
-                          className={`font-semibold ${
-                            tx.type === "income" ? "text-green-600" : "text-red-500"
-                          }`}
-                        >
-                          {tx.type === "income" ? "+" : "-"}{"\u20B9"}
-                          {tx.amount.toLocaleString("en-IN")}
-                        </span>
-                        {tx.isPendingOrder && (
-                          <span className="block text-xs text-muted-foreground">
-                            Total: {"\u20B9"}{tx.totalOrderAmount?.toLocaleString("en-IN")}
-                            {isPending && ` | Pending: \u20B9${(tx.pendingAmount || 0).toLocaleString("en-IN")}`}
-                          </span>
+                        {st === "unconfirmed" ? (
+                          <span className="text-muted-foreground">\u2014</span>
+                        ) : (
+                          <>
+                            <span
+                              className={`font-semibold tabular-nums ${
+                                tx.type === "income" ? "text-vivid-mint" : "text-vivid-coral"
+                              }`}
+                            >
+                              {tx.type === "income" ? "+" : "-"}{"\u20B9"}
+                              {tx.amount.toLocaleString("en-IN")}
+                            </span>
+                            {tx.isPendingOrder && (
+                              <span className="block text-xs text-muted-foreground">
+                                Total: {"\u20B9"}{tx.totalOrderAmount?.toLocaleString("en-IN")}
+                                {isPending && ` | Pending: \u20B9${(tx.pendingAmount || 0).toLocaleString("en-IN")}`}
+                              </span>
+                            )}
+                          </>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -329,7 +368,7 @@ export default function TransactionsPage() {
                                   size="icon"
                                   variant="ghost"
                                   onClick={() => handleCollect(tx)}
-                                  className="h-7 w-7 text-green-600 hover:text-green-700"
+                                  className="h-7 w-7 text-vivid-mint hover:text-vivid-mint hover:bg-block-mint/40"
                                   title="Collect Payment"
                                 >
                                   <CheckCircle className="h-3.5 w-3.5" />
@@ -347,7 +386,7 @@ export default function TransactionsPage() {
                                 size="icon"
                                 variant="ghost"
                                 onClick={() => handleDelete(tx._id)}
-                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                className="h-7 w-7 text-vivid-coral hover:text-vivid-coral hover:bg-block-coral/30"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
@@ -371,18 +410,19 @@ export default function TransactionsPage() {
 
       {/* Add / Edit Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Transaction" : "Add Transaction"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <div className="-mr-2 flex-1 space-y-4 overflow-y-auto py-2 pr-2">
             {/* Type selector */}
             <div className="grid grid-cols-2 gap-3">
               {["income", "expense"].map((t) => (
                 <Button
                   key={t}
                   size="sm"
-                  variant={form.type === t ? "default" : "outline"}
+                  variant="outline"
+                  className={cn(form.type === t && TYPE_FILTER_STYLES[t])}
                   onClick={() =>
                     setForm((p) => ({
                       ...p,
@@ -398,23 +438,51 @@ export default function TransactionsPage() {
 
             {/* Pending Order checkbox — income only */}
             {form.type === "income" && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="pendingOrder"
-                  checked={!!form.isPendingOrder}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, isPendingOrder: e.target.checked }))
-                  }
-                />
-                <Label htmlFor="pendingOrder" className="text-sm cursor-pointer">
-                  Pending Order
-                </Label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="pendingOrder"
+                    checked={!!form.isPendingOrder}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        isPendingOrder: e.target.checked,
+                        ...(e.target.checked ? { isUnconfirmed: false } : {}),
+                      }))
+                    }
+                  />
+                  <Label htmlFor="pendingOrder" className="text-sm cursor-pointer">
+                    Pending Order
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="unconfirmed"
+                    checked={!!form.isUnconfirmed}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        isUnconfirmed: e.target.checked,
+                        ...(e.target.checked ? { isPendingOrder: false } : {}),
+                      }))
+                    }
+                  />
+                  <Label htmlFor="unconfirmed" className="text-sm cursor-pointer">
+                    Amount not confirmed yet
+                  </Label>
+                </div>
+                {form.isUnconfirmed && (
+                  <p className="text-xs text-muted-foreground">
+                    Records this job with no amount. It won't affect your totals until you edit it later with the real amount received.
+                  </p>
+                )}
               </div>
             )}
 
             {/* Amount — normal transactions */}
-            {!form.isPendingOrder && (
+            {!form.isPendingOrder && !form.isUnconfirmed && (
               <div className="space-y-1.5">
                 <Label>Amount ({"\u20B9"})</Label>
                 <Input
@@ -428,7 +496,7 @@ export default function TransactionsPage() {
             )}
 
             {/* Pending order fields */}
-            {form.isPendingOrder && (
+            {form.isPendingOrder && !form.isUnconfirmed && (
               <>
                 <div className="space-y-1.5">
                   <Label>Total Order Amount ({"\u20B9"})</Label>
@@ -460,7 +528,7 @@ export default function TransactionsPage() {
                     type="number"
                     readOnly
                     value={pendingCalc}
-                    className="bg-muted"
+                    className="bg-block-cream/40 dark:bg-vivid-cream/10"
                   />
                 </div>
               </>
