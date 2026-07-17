@@ -62,6 +62,12 @@ export default function TransactionsPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editing, setEditing] = useState(null);
+  const [collectTx, setCollectTx] = useState(null);
+  const [collectForm, setCollectForm] = useState({
+    amount: "",
+    date: format(new Date(), "yyyy-MM-dd"),
+    paymentMethod: "Cash",
+  });
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({
     type: "",
@@ -188,11 +194,38 @@ export default function TransactionsPage() {
     fetchData();
   };
 
-  const handleCollect = async (tx) => {
-    const pending = tx.pendingAmount || 0;
-    if (!confirm(`Collect pending amount of \u20B9${pending.toLocaleString("en-IN")}?`)) return;
+  const openCollect = (tx) => {
+    setCollectTx(tx);
+    setCollectForm({
+      amount: String(tx.pendingAmount || ""),
+      date: format(new Date(), "yyyy-MM-dd"),
+      paymentMethod: tx.paymentMethod || "Cash",
+    });
+  };
+
+  const handleCollect = async () => {
+    if (!collectTx) return;
+    const pending = collectTx.pendingAmount || 0;
+    const amount = Number(collectForm.amount);
+    if (!amount || amount <= 0) {
+      alert("Enter a valid collect amount.");
+      return;
+    }
+    if (amount > pending) {
+      alert("Collect amount cannot exceed pending amount.");
+      return;
+    }
+    if (!collectForm.date) {
+      alert("Select the payment date.");
+      return;
+    }
     try {
-      await axiosInstance.post(`/transactions/${tx._id}/collect`);
+      await axiosInstance.post(`/transactions/${collectTx._id}/collect`, {
+        amount,
+        date: collectForm.date,
+        paymentMethod: collectForm.paymentMethod,
+      });
+      setCollectTx(null);
       fetchData();
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to collect payment");
@@ -367,7 +400,7 @@ export default function TransactionsPage() {
                                 <Button
                                   size="icon"
                                   variant="ghost"
-                                  onClick={() => handleCollect(tx)}
+                                  onClick={() => openCollect(tx)}
                                   className="h-7 w-7 text-vivid-mint hover:text-vivid-mint hover:bg-block-mint/40"
                                   title="Collect Payment"
                                 >
@@ -407,6 +440,61 @@ export default function TransactionsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Collect Payment Dialog */}
+      <Dialog open={!!collectTx} onOpenChange={(v) => !v && setCollectTx(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Collect Payment</DialogTitle>
+          </DialogHeader>
+          {collectTx && (
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">
+                {collectTx.remark} — pending{" "}
+                <span className="font-medium text-foreground">
+                  {"\u20B9"}{(collectTx.pendingAmount || 0).toLocaleString("en-IN")}
+                </span>
+              </p>
+              <div className="space-y-1.5">
+                <Label>Amount received ({"\u20B9"})</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max={collectTx.pendingAmount || 0}
+                  value={collectForm.amount}
+                  onChange={(e) => setCollectForm((p) => ({ ...p, amount: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Payment date</Label>
+                <Input
+                  type="date"
+                  value={collectForm.date}
+                  onChange={(e) => setCollectForm((p) => ({ ...p, date: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Payment Method</Label>
+                <select
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  value={collectForm.paymentMethod}
+                  onChange={(e) => setCollectForm((p) => ({ ...p, paymentMethod: e.target.value }))}
+                >
+                  {PAYMENT_METHODS.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCollectTx(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCollect}>Collect</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add / Edit Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>

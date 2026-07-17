@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   FileBarChart,
+  CalendarDays,
   LogOut,
   Menu,
 } from "lucide-react";
@@ -19,6 +20,7 @@ const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/transactions", icon: ArrowLeftRight, label: "Transactions" },
   { to: "/reports", icon: FileBarChart, label: "Reports" },
+  { to: "/calendar", icon: CalendarDays, label: "Calendar" },
 ];
 
 const SidebarContext = createContext(null);

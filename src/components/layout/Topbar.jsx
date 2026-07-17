@@ -9,6 +9,7 @@ const titles = {
   "/": { title: "Dashboard", subtitle: "Daily expense overview" },
   "/transactions": { title: "Transactions", subtitle: "Manage income & expenses" },
   "/reports": { title: "Reports", subtitle: "Export your financial data" },
+  "/calendar": { title: "Calendar", subtitle: "Notes by date" },
 };
 
 export default function Topbar() {
