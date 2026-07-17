@@ -8,8 +8,10 @@ import { useSidebar } from "./Sidebar";
 const titles = {
   "/": { title: "Dashboard", subtitle: "Daily expense overview" },
   "/transactions": { title: "Transactions", subtitle: "Manage income & expenses" },
+  "/payroll": { title: "Payroll", subtitle: "Recurring employee payment tracking" },
+  "/notes": { title: "Notes", subtitle: "Shared team notes" },
   "/reports": { title: "Reports", subtitle: "Export your financial data" },
-  "/calendar": { title: "Calendar", subtitle: "Notes by date" },
+  "/calendar": { title: "Calendar", subtitle: "Shared team notes by date" },
 };
 
 export default function Topbar() {

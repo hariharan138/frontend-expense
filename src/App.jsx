@@ -7,6 +7,8 @@ import DashboardPage from "./pages/DashboardPage";
 import TransactionsPage from "./pages/TransactionsPage";
 import ReportsPage from "./pages/ReportsPage";
 import CalendarPage from "./pages/CalendarPage";
+import PayrollPage from "./pages/PayrollPage";
+import NotesPage from "./pages/NotesPage";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -36,6 +38,8 @@ export default function App() {
             <Route path="transactions" element={<TransactionsPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="calendar" element={<CalendarPage />} />
+            <Route path="payroll" element={<PayrollPage />} />
+            <Route path="notes" element={<NotesPage />} />
           </Route>
         </Routes>
         </HashRouter>

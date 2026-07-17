@@ -123,7 +123,7 @@ export default function CalendarPage() {
     <div className="flex h-[calc(100dvh-7.5rem)] flex-col gap-4 md:h-[calc(100dvh-6.5rem)]">
       <div className="flex shrink-0 items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Click a date to view, add, edit, or delete notes
+          Shared team calendar — all users can view and edit notes
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -223,6 +223,11 @@ export default function CalendarPage() {
                     )}
                   >
                     <p className="whitespace-pre-wrap text-sm">{note.text}</p>
+                    {note.user?.name && (
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        by {note.user.name}
+                      </p>
+                    )}
                     <div className="mt-2 flex gap-1">
                       <Button
                         size="icon"

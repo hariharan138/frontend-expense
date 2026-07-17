@@ -5,6 +5,8 @@ import {
   ArrowLeftRight,
   FileBarChart,
   CalendarDays,
+  Banknote,
+  StickyNote,
   LogOut,
   Menu,
 } from "lucide-react";
@@ -19,6 +21,8 @@ import ThemeToggle from "../theme/ThemeToggle";
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/transactions", icon: ArrowLeftRight, label: "Transactions" },
+  { to: "/payroll", icon: Banknote, label: "Payroll" },
+  { to: "/notes", icon: StickyNote, label: "Notes" },
   { to: "/reports", icon: FileBarChart, label: "Reports" },
   { to: "/calendar", icon: CalendarDays, label: "Calendar" },
 ];

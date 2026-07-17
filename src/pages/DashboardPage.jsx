@@ -11,10 +11,7 @@ import {
 import {
   Area,
   AreaChart,
-  Bar,
-  BarChart,
   CartesianGrid,
-  Cell,
   Label,
   Pie,
   PieChart,
@@ -65,6 +62,36 @@ const CARD_TONES = {
   sky: { edge: "bg-vivid-sky", chip: "bg-block-sky/60 text-vivid-sky dark:bg-vivid-sky/15", value: "text-vivid-sky" },
 };
 
+const RATE_CHART = [
+  [
+    { dims: "3 x 2", rate: 250 },
+    { dims: "4 x 3", rate: 350 },
+    { dims: "5 x 3", rate: 450 },
+    { dims: "6 x 3", rate: 500 },
+    { dims: "6 x 4", rate: 600 },
+    { dims: "8 x 3", rate: 700 },
+    { dims: "8 x 4", rate: 750 },
+  ],
+  [
+    { dims: "8 x 5", rate: 800 },
+    { dims: "8 x 6", rate: 850 },
+    { dims: "10 x 5", rate: 900 },
+    { dims: "10 x 6", rate: 1000 },
+    { dims: "10 x 8", rate: 1100 },
+    { dims: "12 x 8", rate: 1400 },
+    { dims: "15 x 8", rate: 1680 },
+  ],
+  [
+    { dims: "20 x 8", rate: 2240 },
+    { dims: "10 x 10", rate: 1400 },
+    { dims: "12 x 10", rate: 1680 },
+    { dims: "15 x 10", rate: 2100 },
+    { dims: "20 x 10", rate: 2800 },
+    { dims: "30 x 10", rate: 4200 },
+    { dims: "50 x 10", rate: 5700 },
+  ],
+];
+
 const cashFlowConfig = {
   income: { label: "Income", color: "#3b82f6" },
   expense: { label: "Expense", color: "#e2593c" },
@@ -74,10 +101,6 @@ const paymentConfig = {
   amount: { label: "Amount" },
   Cash: { label: "Cash", color: "#c08a1e" },
   UPI: { label: "UPI", color: "#7c5cd6" },
-};
-
-const netConfig = {
-  net: { label: "Net", color: "#7c5cd6" },
 };
 
 const StatCard = ({ title, value, icon: Icon, tone = "lilac", isCurrency = true, onClick, delay = 0 }) => {
@@ -167,7 +190,6 @@ export default function DashboardPage() {
 
   // Chart data
   const cashFlowData = [...dailyBreakdown].reverse().slice(-30);
-  const dailyNetData = [...dailyBreakdown].reverse().slice(-14);
 
   const paymentMap = {};
   transactions.forEach((tx) => {
@@ -320,55 +342,42 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Charts row: daily net + pending orders */}
+      {/* Rate chart + payment methods */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card
           className="animate-fade-up border-border shadow-card lg:col-span-2"
           style={{ animationDelay: "360ms" }}
         >
           <CardHeader>
-            <CardTitle className="text-base">Daily Net Balance</CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Last {dailyNetData.length} active day{dailyNetData.length === 1 ? "" : "s"}
-            </p>
+            <CardTitle className="text-base">Rate Chart</CardTitle>
+            <p className="text-xs text-muted-foreground">Size × rate reference (₹)</p>
           </CardHeader>
           <CardContent>
-            {dailyNetData.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">No data yet.</p>
-            ) : (
-              <ChartContainer config={netConfig} className="h-56 w-full">
-                <BarChart data={dailyNetData} margin={{ left: 4, right: 4 }}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="date"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    minTickGap={24}
-                    tickFormatter={(value) => format(new Date(value), "d MMM")}
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={
-                      <ChartTooltipContent
-                        hideIndicator
-                        labelFormatter={(value, payload) =>
-                          format(new Date(payload?.[0]?.payload?.date ?? value), "dd MMM yyyy")
-                        }
-                      />
-                    }
-                  />
-                  <Bar dataKey="net" radius={[6, 6, 0, 0]}>
-                    {dailyNetData.map((day) => (
-                      <Cell
-                        key={day.date}
-                        fill={day.net >= 0 ? "#1f9d55" : "#e2593c"}
-                      />
+            <div className="overflow-hidden rounded-xl border border-border bg-muted/40 px-3 py-4 sm:px-5 sm:py-5">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+                {RATE_CHART.map((col, ci) => (
+                  <div key={ci} className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-3 px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <span>Size</span>
+                      <span>Rate</span>
+                    </div>
+                    {col.map((row) => (
+                      <div
+                        key={`${row.dims}-${row.rate}`}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:bg-primary/5"
+                      >
+                        <span className="font-medium tabular-nums text-muted-foreground">
+                          {row.dims}
+                        </span>
+                        <span className="font-display font-semibold tabular-nums text-foreground">
+                          ₹{row.rate.toLocaleString("en-IN")}
+                        </span>
+                      </div>
                     ))}
-                  </Bar>
-                </BarChart>
-              </ChartContainer>
-            )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
