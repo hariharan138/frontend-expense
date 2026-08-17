@@ -12,9 +12,6 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  Label,
-  Pie,
-  PieChart,
   XAxis,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -97,12 +94,6 @@ const cashFlowConfig = {
   expense: { label: "Expense", color: "#e2593c" },
 };
 
-const paymentConfig = {
-  amount: { label: "Amount" },
-  Cash: { label: "Cash", color: "#c08a1e" },
-  UPI: { label: "UPI", color: "#7c5cd6" },
-};
-
 const StatCard = ({ title, value, icon: Icon, tone = "lilac", isCurrency = true, onClick, delay = 0 }) => {
   const t = CARD_TONES[tone];
 
@@ -141,6 +132,14 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showNetBalance, setShowNetBalance] = useState(false);
   const [pendingDialog, setPendingDialog] = useState(null);
+  const [inHand, setInHand] = useState(
+    () => localStorage.getItem("inHandAmount") || "0"
+  );
+  const [editingInHand, setEditingInHand] = useState(false);
+  const [expenseOverride, setExpenseOverride] = useState(
+    () => localStorage.getItem("totalExpenseOverride")
+  );
+  const [editingExpense, setEditingExpense] = useState(false);
 
   useEffect(() => {
     axiosInstance
@@ -191,18 +190,24 @@ export default function DashboardPage() {
   // Chart data
   const cashFlowData = [...dailyBreakdown].reverse().slice(-30);
 
-  const paymentMap = {};
-  transactions.forEach((tx) => {
-    const method = tx.paymentMethod || "Cash";
-    paymentMap[method] = (paymentMap[method] || 0) + tx.amount;
-  });
-  const paymentData = Object.entries(paymentMap).map(([method, amount]) => ({
-    method,
-    amount,
-    fill: `var(--color-${method})`,
-  }));
-
   const recent = transactions.slice(0, 15);
+
+  const saveInHand = (value) => {
+    const amount = Number(value) || 0;
+    setInHand(String(amount));
+    localStorage.setItem("inHandAmount", String(amount));
+    setEditingInHand(false);
+  };
+
+  const saveExpenseOverride = (value) => {
+    const amount = Number(value) || 0;
+    setExpenseOverride(String(amount));
+    localStorage.setItem("totalExpenseOverride", String(amount));
+    setEditingExpense(false);
+  };
+
+  const displayedExpense =
+    expenseOverride !== null ? Number(expenseOverride) : totalExpense;
 
   if (loading) {
     return (
@@ -383,61 +388,66 @@ export default function DashboardPage() {
 
         <Card className="animate-fade-up border-border shadow-card" style={{ animationDelay: "420ms" }}>
           <CardHeader>
-            <CardTitle className="text-base">Payment Methods</CardTitle>
-            <p className="text-xs text-muted-foreground">Share of total amount by method</p>
+            <CardTitle className="text-base">Cash Overview</CardTitle>
+            <p className="text-xs text-muted-foreground">Expense total and cash in hand</p>
           </CardHeader>
-          <CardContent>
-            {paymentData.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">No data yet.</p>
-            ) : (
-              <ChartContainer config={paymentConfig} className="mx-auto h-64 w-full max-w-xs">
-                <PieChart>
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent nameKey="method" hideLabel />}
-                  />
-                  <Pie
-                    data={paymentData}
-                    dataKey="amount"
-                    nameKey="method"
-                    innerRadius={58}
-                    strokeWidth={4}
-                  >
-                    <Label
-                      content={({ viewBox }) => {
-                        if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                          return (
-                            <text
-                              x={viewBox.cx}
-                              y={viewBox.cy}
-                              textAnchor="middle"
-                              dominantBaseline="middle"
-                            >
-                              <tspan
-                                x={viewBox.cx}
-                                y={viewBox.cy}
-                                className="fill-foreground font-display text-xl font-semibold"
-                              >
-                                {transactions.length}
-                              </tspan>
-                              <tspan
-                                x={viewBox.cx}
-                                y={(viewBox.cy || 0) + 20}
-                                className="fill-muted-foreground text-xs"
-                              >
-                                transactions
-                              </tspan>
-                            </text>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                  </Pie>
-                  <ChartLegend content={<ChartLegendContent nameKey="method" />} />
-                </PieChart>
-              </ChartContainer>
-            )}
+          <CardContent className="p-0">
+            <table className="w-full text-sm">
+              <tbody>
+                <tr className="border-b border-border/50">
+                  <td className="px-4 py-3 text-muted-foreground">Total Expense</td>
+                  <td className="px-4 py-3 text-right">
+                    {editingExpense ? (
+                      <input
+                        type="number"
+                        autoFocus
+                        defaultValue={displayedExpense}
+                        onBlur={(e) => saveExpenseOverride(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveExpenseOverride(e.target.value);
+                          if (e.key === "Escape") setEditingExpense(false);
+                        }}
+                        className="w-28 rounded border border-border bg-background px-1 py-0.5 text-right font-display text-base font-semibold tabular-nums outline-none"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setEditingExpense(true)}
+                        className="font-display text-base font-semibold tabular-nums text-vivid-coral hover:underline"
+                      >
+                        ₹{displayedExpense.toLocaleString("en-IN")}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-3 text-muted-foreground">In Hand</td>
+                  <td className="px-4 py-3 text-right">
+                    {editingInHand ? (
+                      <input
+                        type="number"
+                        autoFocus
+                        defaultValue={inHand}
+                        onBlur={(e) => saveInHand(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveInHand(e.target.value);
+                          if (e.key === "Escape") setEditingInHand(false);
+                        }}
+                        className="w-28 rounded border border-border bg-background px-1 py-0.5 text-right font-display text-base font-semibold tabular-nums outline-none"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setEditingInHand(true)}
+                        className="font-display text-base font-semibold tabular-nums text-vivid-mint hover:underline"
+                      >
+                        ₹{Number(inHand).toLocaleString("en-IN")}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </CardContent>
         </Card>
       </div>
