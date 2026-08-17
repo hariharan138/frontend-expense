@@ -132,13 +132,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showNetBalance, setShowNetBalance] = useState(false);
   const [pendingDialog, setPendingDialog] = useState(null);
-  const [inHand, setInHand] = useState(
-    () => localStorage.getItem("inHandAmount") || "0"
-  );
+  const [inHand, setInHand] = useState("0");
   const [editingInHand, setEditingInHand] = useState(false);
-  const [expenseOverride, setExpenseOverride] = useState(
-    () => localStorage.getItem("totalExpenseOverride")
-  );
+  const [expenseOverride, setExpenseOverride] = useState(null);
   const [editingExpense, setEditingExpense] = useState(false);
 
   useEffect(() => {
@@ -147,6 +143,16 @@ export default function DashboardPage() {
       .then((r) => setTransactions(r.data))
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    axiosInstance
+      .get("/cash-overview")
+      .then((r) => {
+        setInHand(String(r.data.inHand ?? 0));
+        setExpenseOverride(
+          r.data.totalExpenseOverride != null ? String(r.data.totalExpenseOverride) : null
+        );
+      })
+      .catch(console.error);
   }, []);
 
   const totalIncome = transactions
@@ -195,15 +201,17 @@ export default function DashboardPage() {
   const saveInHand = (value) => {
     const amount = Number(value) || 0;
     setInHand(String(amount));
-    localStorage.setItem("inHandAmount", String(amount));
     setEditingInHand(false);
+    axiosInstance.put("/cash-overview", { inHand: amount }).catch(console.error);
   };
 
   const saveExpenseOverride = (value) => {
     const amount = Number(value) || 0;
     setExpenseOverride(String(amount));
-    localStorage.setItem("totalExpenseOverride", String(amount));
     setEditingExpense(false);
+    axiosInstance
+      .put("/cash-overview", { totalExpenseOverride: amount })
+      .catch(console.error);
   };
 
   const displayedExpense =
