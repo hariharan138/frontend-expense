@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { DesktopSidebar, MobileSidebarMenu, SidebarProvider } from "./Sidebar";
 import Topbar from "./Topbar";
+import Logo from "../theme/Logo";
 
 export default function Layout() {
   return (
@@ -14,7 +15,7 @@ export default function Layout() {
           {/* Mobile Header with Menu */}
           <header className="flex items-center border-b border-border bg-background px-4 py-2 md:hidden">
             <MobileSidebarMenu />
-            <img src="/logo.png" alt="" className="ml-2 h-7 w-7 object-contain" />
+            <Logo className="ml-2 h-7 w-7" />
             <h1 className="ml-2 font-display text-lg font-semibold">Vetri Digitals</h1>
           </header>
 

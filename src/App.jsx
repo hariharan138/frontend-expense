@@ -9,6 +9,7 @@ import ReportsPage from "./pages/ReportsPage";
 import CalendarPage from "./pages/CalendarPage";
 import PayrollPage from "./pages/PayrollPage";
 import NotesPage from "./pages/NotesPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="payroll" element={<PayrollPage />} />
             <Route path="notes" element={<NotesPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>
         </HashRouter>

@@ -11,7 +11,12 @@ import {
 import {
   Area,
   AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
+  Line,
+  LineChart,
+  ReferenceLine,
   XAxis,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -92,9 +97,17 @@ const RATE_CHART = [
 const cashFlowConfig = {
   income: { label: "Income", color: "#3b82f6" },
   expense: { label: "Expense", color: "#e2593c" },
+  balance: { label: "Balance", color: "#7c5cd6" },
 };
 
-const StatCard = ({ title, value, icon: Icon, tone = "lilac", isCurrency = true, onClick, delay = 0 }) => {
+const CASH_FLOW_CHART_TYPES = [
+  { id: "area", label: "Area", chart: AreaChart },
+  { id: "line", label: "Line", chart: LineChart },
+  { id: "bar", label: "Bar", chart: BarChart },
+  { id: "balance", label: "Balance", chart: AreaChart },
+];
+
+const StatCard = ({ title, value, icon: Icon, tone = "lilac", isCurrency = true, onClick, onCashClick, delay = 0 }) => {
   const t = CARD_TONES[tone];
 
   return (
@@ -112,9 +125,24 @@ const StatCard = ({ title, value, icon: Icon, tone = "lilac", isCurrency = true,
       />
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg", t.chip)}>
-          <Icon className="h-4 w-4" />
-        </span>
+        <div className="flex items-center gap-2">
+          {onCashClick && (
+            <button
+              type="button"
+              title="Cash overview"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCashClick();
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+            >
+              <Banknote className="h-4 w-4" />
+            </button>
+          )}
+          <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg", t.chip)}>
+            <Icon className="h-4 w-4" />
+          </span>
+        </div>
       </CardHeader>
       <CardContent>
         <p className={cn("font-display text-2xl font-semibold tracking-tight tabular-nums", t.value)}>
@@ -131,6 +159,8 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNetBalance, setShowNetBalance] = useState(false);
+  const [cashFlowChartType, setCashFlowChartType] = useState("area");
+  const [showCash, setShowCash] = useState(false);
   const [pendingDialog, setPendingDialog] = useState(null);
   const [inHand, setInHand] = useState("0");
   const [editingInHand, setEditingInHand] = useState(false);
@@ -193,8 +223,8 @@ export default function DashboardPage() {
     })
     .reverse();
 
-  // Chart data
-  const cashFlowData = [...dailyBreakdown].reverse().slice(-30);
+  // Chart data (income, expense, net + running balance), last 30 active days
+  const cashFlowData = [...dailyWithBalance].reverse().slice(-30);
 
   const recent = transactions.slice(0, 15);
 
@@ -237,6 +267,7 @@ export default function DashboardPage() {
           icon={Wallet}
           tone={net >= 0 ? "mint" : "coral"}
           onClick={() => setShowNetBalance(true)}
+          onCashClick={() => setShowCash(true)}
           delay={120}
         />
         <StatCard
@@ -249,69 +280,108 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts row: cash flow + payment split */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card
-          className="animate-fade-up border-border shadow-card lg:col-span-2"
+          className="animate-fade-up border-border shadow-card"
           style={{ animationDelay: "240ms" }}
         >
-          <CardHeader>
-            <CardTitle className="text-base">Cash Flow</CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Income vs expense, last {cashFlowData.length} active day{cashFlowData.length === 1 ? "" : "s"}
-            </p>
+          <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+            <div>
+              <CardTitle className="text-base">Cash Flow</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                {cashFlowChartType === "balance" ? "Running balance" : "Income vs expense"}, last{" "}
+                {cashFlowData.length} active day{cashFlowData.length === 1 ? "" : "s"}
+              </p>
+            </div>
+            <div className="flex shrink-0 gap-0.5 rounded-lg border border-border p-0.5">
+              {CASH_FLOW_CHART_TYPES.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setCashFlowChartType(c.id)}
+                  className={cn(
+                    "rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                    cashFlowChartType === c.id
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
           </CardHeader>
           <CardContent>
             {cashFlowData.length === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">No data yet.</p>
             ) : (
               <ChartContainer config={cashFlowConfig} className="h-64 w-full">
-                <AreaChart data={cashFlowData} margin={{ left: 4, right: 4 }}>
-                  <defs>
-                    <linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-income)" stopOpacity={0.7} />
-                      <stop offset="95%" stopColor="var(--color-income)" stopOpacity={0.05} />
-                    </linearGradient>
-                    <linearGradient id="fillExpense" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-expense)" stopOpacity={0.7} />
-                      <stop offset="95%" stopColor="var(--color-expense)" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="date"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    minTickGap={24}
-                    tickFormatter={(value) => format(new Date(value), "d MMM")}
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={
-                      <ChartTooltipContent
-                        indicator="dot"
-                        labelFormatter={(value, payload) =>
-                          format(new Date(payload?.[0]?.payload?.date ?? value), "dd MMM yyyy")
+                {(() => {
+                  const ChartTag = CASH_FLOW_CHART_TYPES.find((c) => c.id === cashFlowChartType).chart;
+                  return (
+                    <ChartTag data={cashFlowData} margin={{ left: 4, right: 4 }}>
+                      <defs>
+                        <linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--color-income)" stopOpacity={0.7} />
+                          <stop offset="95%" stopColor="var(--color-income)" stopOpacity={0.05} />
+                        </linearGradient>
+                        <linearGradient id="fillExpense" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--color-expense)" stopOpacity={0.7} />
+                          <stop offset="95%" stopColor="var(--color-expense)" stopOpacity={0.05} />
+                        </linearGradient>
+                        <linearGradient id="fillBalance" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--color-balance)" stopOpacity={0.7} />
+                          <stop offset="95%" stopColor="var(--color-balance)" stopOpacity={0.05} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid vertical={false} />
+                      <XAxis
+                        dataKey="date"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        minTickGap={24}
+                        tickFormatter={(value) => format(new Date(value), "d MMM")}
+                      />
+                      {cashFlowChartType === "balance" && (
+                        <ReferenceLine y={0} stroke="var(--border)" strokeDasharray="3 3" />
+                      )}
+                      <ChartTooltip
+                        cursor={false}
+                        content={
+                          <ChartTooltipContent
+                            indicator="dot"
+                            labelFormatter={(value, payload) =>
+                              format(new Date(payload?.[0]?.payload?.date ?? value), "dd MMM yyyy")
+                            }
+                          />
                         }
                       />
-                    }
-                  />
-                  <Area
-                    dataKey="income"
-                    type="monotone"
-                    fill="url(#fillIncome)"
-                    stroke="var(--color-income)"
-                    strokeWidth={2}
-                  />
-                  <Area
-                    dataKey="expense"
-                    type="monotone"
-                    fill="url(#fillExpense)"
-                    stroke="var(--color-expense)"
-                    strokeWidth={2}
-                  />
-                  <ChartLegend content={<ChartLegendContent />} />
-                </AreaChart>
+                      {cashFlowChartType === "area" && (
+                        <Area dataKey="income" type="monotone" fill="url(#fillIncome)" stroke="var(--color-income)" strokeWidth={2} />
+                      )}
+                      {cashFlowChartType === "area" && (
+                        <Area dataKey="expense" type="monotone" fill="url(#fillExpense)" stroke="var(--color-expense)" strokeWidth={2} />
+                      )}
+                      {cashFlowChartType === "line" && (
+                        <Line dataKey="income" type="monotone" dot={false} stroke="var(--color-income)" strokeWidth={2} />
+                      )}
+                      {cashFlowChartType === "line" && (
+                        <Line dataKey="expense" type="monotone" dot={false} stroke="var(--color-expense)" strokeWidth={2} />
+                      )}
+                      {cashFlowChartType === "bar" && (
+                        <Bar dataKey="income" fill="var(--color-income)" radius={[4, 4, 0, 0]} />
+                      )}
+                      {cashFlowChartType === "bar" && (
+                        <Bar dataKey="expense" fill="var(--color-expense)" radius={[4, 4, 0, 0]} />
+                      )}
+                      {cashFlowChartType === "balance" && (
+                        <Area dataKey="balance" type="monotone" fill="url(#fillBalance)" stroke="var(--color-balance)" strokeWidth={2} />
+                      )}
+                      {cashFlowChartType !== "balance" && <ChartLegend content={<ChartLegendContent />} />}
+                    </ChartTag>
+                  );
+                })()}
               </ChartContainer>
             )}
           </CardContent>
@@ -357,7 +427,7 @@ export default function DashboardPage() {
 
       {/* Rate chart + payment methods */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card
+        {/* <Card
           className="animate-fade-up border-border shadow-card lg:col-span-2"
           style={{ animationDelay: "360ms" }}
         >
@@ -392,72 +462,8 @@ export default function DashboardPage() {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
-        <Card className="animate-fade-up border-border shadow-card" style={{ animationDelay: "420ms" }}>
-          <CardHeader>
-            <CardTitle className="text-base">Cash Overview</CardTitle>
-            <p className="text-xs text-muted-foreground">Expense total and cash in hand</p>
-          </CardHeader>
-          <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <tbody>
-                <tr className="border-b border-border/50">
-                  <td className="px-4 py-3 text-muted-foreground">Total Expense</td>
-                  <td className="px-4 py-3 text-right">
-                    {editingExpense ? (
-                      <input
-                        type="number"
-                        autoFocus
-                        defaultValue={displayedExpense}
-                        onBlur={(e) => saveExpenseOverride(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveExpenseOverride(e.target.value);
-                          if (e.key === "Escape") setEditingExpense(false);
-                        }}
-                        className="w-28 rounded border border-border bg-background px-1 py-0.5 text-right font-display text-base font-semibold tabular-nums outline-none"
-                      />
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setEditingExpense(true)}
-                        className="font-display text-base font-semibold tabular-nums text-vivid-coral hover:underline"
-                      >
-                        ₹{displayedExpense.toLocaleString("en-IN")}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-4 py-3 text-muted-foreground">In Hand</td>
-                  <td className="px-4 py-3 text-right">
-                    {editingInHand ? (
-                      <input
-                        type="number"
-                        autoFocus
-                        defaultValue={inHand}
-                        onBlur={(e) => saveInHand(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveInHand(e.target.value);
-                          if (e.key === "Escape") setEditingInHand(false);
-                        }}
-                        className="w-28 rounded border border-border bg-background px-1 py-0.5 text-right font-display text-base font-semibold tabular-nums outline-none"
-                      />
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setEditingInHand(true)}
-                        className="font-display text-base font-semibold tabular-nums text-vivid-mint hover:underline"
-                      >
-                        ₹{Number(inHand).toLocaleString("en-IN")}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Recent Transactions */}
@@ -604,6 +610,72 @@ export default function DashboardPage() {
               <p className="py-10 text-center text-sm text-muted-foreground">No data available.</p>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cash Overview Dialog */}
+      <Dialog open={showCash} onOpenChange={setShowCash}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Cash Overview</DialogTitle>
+            <p className="text-xs text-muted-foreground">Expense total and cash in hand</p>
+          </DialogHeader>
+          <table className="w-full text-sm">
+            <tbody>
+              <tr className="border-b border-border/50">
+                <td className="px-4 py-3 text-muted-foreground">Total Expense</td>
+                <td className="px-4 py-3 text-right">
+                  {editingExpense ? (
+                    <input
+                      type="number"
+                      autoFocus
+                      defaultValue={displayedExpense}
+                      onBlur={(e) => saveExpenseOverride(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveExpenseOverride(e.target.value);
+                        if (e.key === "Escape") setEditingExpense(false);
+                      }}
+                      className="w-28 rounded border border-border bg-background px-1 py-0.5 text-right font-display text-base font-semibold tabular-nums outline-none"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setEditingExpense(true)}
+                      className="font-display text-base font-semibold tabular-nums text-vivid-coral hover:underline"
+                    >
+                      ₹{displayedExpense.toLocaleString("en-IN")}
+                    </button>
+                  )}
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-3 text-muted-foreground">In Hand</td>
+                <td className="px-4 py-3 text-right">
+                  {editingInHand ? (
+                    <input
+                      type="number"
+                      autoFocus
+                      defaultValue={inHand}
+                      onBlur={(e) => saveInHand(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveInHand(e.target.value);
+                        if (e.key === "Escape") setEditingInHand(false);
+                      }}
+                      className="w-28 rounded border border-border bg-background px-1 py-0.5 text-right font-display text-base font-semibold tabular-nums outline-none"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setEditingInHand(true)}
+                      className="font-display text-base font-semibold tabular-nums text-vivid-mint hover:underline"
+                    >
+                      ₹{Number(inHand).toLocaleString("en-IN")}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </DialogContent>
       </Dialog>
 

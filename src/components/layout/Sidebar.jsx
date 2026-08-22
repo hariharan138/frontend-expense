@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Banknote,
   StickyNote,
+  Settings,
   LogOut,
   Menu,
 } from "lucide-react";
@@ -17,14 +18,16 @@ import { Separator } from "../ui/separator";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 import ThemeToggle from "../theme/ThemeToggle";
+import Logo from "../theme/Logo";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/transactions", icon: ArrowLeftRight, label: "Transactions" },
-  { to: "/payroll", icon: Banknote, label: "Payroll" },
+  // { to: "/payroll", icon: Banknote, label: "Payroll" },
   { to: "/notes", icon: StickyNote, label: "Notes" },
   { to: "/reports", icon: FileBarChart, label: "Reports" },
   { to: "/calendar", icon: CalendarDays, label: "Calendar" },
+  { to: "/settings", icon: Settings, label: "Settings" },
 ];
 
 const SidebarContext = createContext(null);
@@ -72,11 +75,7 @@ function SidebarContent({ collapsed = false }) {
           collapsed ? "justify-center px-2" : "px-4"
         )}
       >
-        <img
-          src="/logo.png"
-          alt="Vetri Digitals logo"
-          className="h-9 w-9 shrink-0 object-contain"
-        />
+        <Logo className="h-9 w-9 shrink-0" />
         {!collapsed && (
           <div className="min-w-0">
             <h1 className="truncate font-display text-base font-semibold tracking-tight">

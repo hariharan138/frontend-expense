@@ -6,6 +6,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import ThemeToggle from "../components/theme/ThemeToggle";
+import Logo from "../components/theme/Logo";
 
 const categorySplit = [
   { label: "Food", value: 38, color: "#818cf8" },
@@ -62,7 +63,7 @@ export default function LoginPage() {
         <div className="flex flex-col justify-between px-8 py-10 sm:px-14 sm:py-12">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="Vetri Digitals" className="h-8 w-8 object-contain" />
+              <Logo className="h-8 w-8" />
               <span className="font-display text-lg font-semibold tracking-tight">
                 Vetri Digitals
               </span>

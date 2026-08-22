@@ -12,6 +12,7 @@ const titles = {
   "/notes": { title: "Notes", subtitle: "Shared team notes" },
   "/reports": { title: "Reports", subtitle: "Export your financial data" },
   "/calendar": { title: "Calendar", subtitle: "Shared team notes by date" },
+  "/settings": { title: "Settings", subtitle: "Appearance & preferences" },
 };
 
 export default function Topbar() {
