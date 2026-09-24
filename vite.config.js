@@ -12,14 +12,17 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "logo.png", "logo-transparent.png"],
       manifest: {
+        id: "/",
         name: "Vetri Digitals",
         short_name: "Vetri Digitals",
         description: "Expense and payroll tracking for Vetri Digitals",
         start_url: "/",
         scope: "/",
         display: "standalone",
+        display_override: ["standalone", "minimal-ui"],
         background_color: "#f1f1f6",
         theme_color: "#7c2eed",
+        categories: ["finance", "business", "productivity"],
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
           { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },

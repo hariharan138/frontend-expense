@@ -91,6 +91,11 @@
     @apply border-border;
   }
 
+  html {
+    /* Stops the rubber-band bounce that makes an installed app feel like a webpage */
+    overscroll-behavior-y: none;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
@@ -98,6 +103,23 @@
     font-style: var(--font-style);
     font-feature-settings: "rlig" 1, "calt" 1, "cv11" 1;
     transition: background-color 0.3s ease, color 0.3s ease, font-family 0.2s ease;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  a,
+  button,
+  [role="button"] {
+    /* Removes the ~300ms tap delay and the double-tap-to-zoom gesture on controls */
+    touch-action: manipulation;
+  }
+
+  @media (max-width: 767px) {
+    /* iOS Safari zooms the whole page on focus of any field under 16px */
+    input,
+    textarea {
+      font-size: 16px !important;
+    }
   }
 
   h1,
