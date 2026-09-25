@@ -9,14 +9,12 @@ import {
   StickyNote,
   Settings,
   LogOut,
-  Menu,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 import ThemeToggle from "../theme/ThemeToggle";
 import Logo from "../theme/Logo";
 
@@ -63,7 +61,7 @@ function getInitials(name) {
     .slice(0, 2);
 }
 
-function SidebarContent({ collapsed = false }) {
+export function SidebarContent({ collapsed = false }) {
   const { user, logout } = useAuth();
 
   return (
@@ -173,38 +171,3 @@ export function DesktopSidebar() {
   );
 }
 
-export function MobileSidebarMenu() {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden"
-          aria-label="Toggle menu"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-      </SheetTrigger>
-      <SheetContent
-        side="left"
-        className="w-64 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground"
-      >
-        <div onClick={() => setOpen(false)}>
-          <SidebarContent />
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-export default function Sidebar() {
-  return (
-    <>
-      <DesktopSidebar />
-      <MobileSidebarMenu />
-    </>
-  );
-}

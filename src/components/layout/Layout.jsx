@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
-import { DesktopSidebar, MobileSidebarMenu, SidebarProvider } from "./Sidebar";
+import { DesktopSidebar, SidebarProvider } from "./Sidebar";
 import Topbar from "./Topbar";
-import Logo from "../theme/Logo";
+import MobileBottomNav from "./MobileBottomNav";
 
 export default function Layout() {
   return (
@@ -12,29 +12,19 @@ export default function Layout() {
 
         {/* Main Content */}
         <div className="flex min-w-0 flex-1 flex-col">
-          {/* Mobile Header with Menu — padded for the notch/status bar when installed */}
-          <header
-            className="flex items-center border-b border-border bg-background px-4 py-2 md:hidden"
-            style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)" }}
-          >
-            <MobileSidebarMenu />
-            <Logo className="ml-2 h-7 w-7" />
-            <h1 className="ml-2 font-display text-lg font-semibold">Vetri Digitals</h1>
-          </header>
-
-          {/* Topbar */}
+          {/* Topbar — doubles as the mobile header; safe-area padding is a no-op on non-notched screens */}
           <Topbar />
 
-          {/* Main Content Area */}
+          {/* Main Content Area — extra bottom clearance on mobile so content isn't hidden behind the tab bar */}
           <main className="flex-1 overflow-y-auto">
-            <div
-              className="px-4 py-4 sm:px-6 md:p-6 lg:p-8"
-              style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
-            >
+            <div className="px-4 pb-24 pt-4 sm:px-6 md:p-6 lg:p-8">
               <Outlet />
             </div>
           </main>
         </div>
+
+        {/* Mobile bottom tab bar — replaces the hamburger menu for a native app feel */}
+        <MobileBottomNav />
       </div>
     </SidebarProvider>
   );

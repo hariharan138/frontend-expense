@@ -21,7 +21,7 @@ export default function Topbar() {
   const page = titles[pathname] ?? titles["/"];
 
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-10 border-b border-border bg-background/80 pt-[env(safe-area-inset-top)] backdrop-blur-sm">
       <div className="flex h-12 items-center justify-between gap-4 px-4 sm:px-6 md:h-14 md:px-6 lg:px-8">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {sidebar && (
